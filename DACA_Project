@@ -1,0 +1,73 @@
+#!/usr/bin/python3
+
+g1145 = "/Users/colin/Desktop/g-1145.pdf"
+
+from PyPDF2 import PdfReader, PdfWriter
+from PyPDF2.generic import BooleanObject, NameObject, IndirectObject
+
+def set_need_appearances_writer(writer):
+    # See 12.7.2 and 7.7.2 for more information:
+    # http://www.adobe.com/content/dam/acom/en/devnet/acrobat/
+    #     pdfs/PDF32000_2008.pdf
+    try:
+        catalog = writer._root_object
+        # get the AcroForm tree and add "/NeedAppearances attribute
+        if "/AcroForm" not in catalog:
+            writer._root_object.update(
+                {
+                    NameObject("/AcroForm"): IndirectObject(
+                        len(writer._objects), 0, writer
+                    )
+                }
+            )
+
+        need_appearances = NameObject("/NeedAppearances")
+        writer._root_object["/AcroForm"][need_appearances] = BooleanObject(True)
+        return writer
+
+    except Exception as e:
+        print("set_need_appearances_writer() catch : ", repr(e))
+        return writer
+
+reader = PdfReader(g1145, "rb")
+if "/AcroForm" in reader.trailer["/Root"]:
+    reader.trailer["/Root"]["/AcroForm"].update(
+        {NameObject("/NeedAppearances"): BooleanObject(True)}
+    )
+
+blankTextFields = reader.get_form_text_fields()
+
+blankTextFieldsKeys = blankTextFields.keys()
+#print(keys)
+#  G-1145: dict_keys(['PDF417BarCode1[0]', 'LastName[0]', 'FirstName[0]', 'MiddleName[0]', 'Email[0]', 'MobilePhoneNumber[0]'])
+
+pdfFillerDict = {}
+for key in blankTextFieldsKeys:
+    
+  if "BarCode" not in key:
+    value = input("What is your " + key[:-3] + "? ")
+    #print("What is your " + key[:-3] + "?")
+    pdfFillerDict.update({key: value})
+  else:
+    pdfFillerDict.update({key: blankTextFields[key]})
+
+writer = PdfWriter()
+
+set_need_appearances_writer(writer)
+if "/AcroForm" in writer._root_object:
+    writer._root_object["/AcroForm"].update(
+        {NameObject("/NeedAppearances"): BooleanObject(True)}
+    )
+
+writer.add_page(reader.pages[0])
+
+print(blankTextFields)
+print(pdfFillerDict)
+writer.update_page_form_field_values(
+  writer.pages[0], pdfFillerDict
+)
+
+with open("filled-out.pdf", "wb") as output_stream:
+    writer.write(output_stream)
+
+output_stream.close()
