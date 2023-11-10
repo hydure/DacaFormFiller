@@ -8,6 +8,9 @@ To work on this project, you will need:
 
 - PyPDF2
 - PyQt
+- PyCryptodome
+
+You can use the standard Python install tool, pip, to install these Python modules, or you can set up a Python Virtual Environment.
 
 ## Conda
 

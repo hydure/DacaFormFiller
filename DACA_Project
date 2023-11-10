@@ -1,6 +1,11 @@
 #!/usr/bin/python3
 
-g1145 = "/Users/colin/Desktop/g-1145.pdf"
+g1145 = "C:/Users/Hydur/OneDrive/Desktop/g-1145.pdf"
+i131 = "C:/Users/Hydur/OneDrive/Desktop/i-131.pdf"
+g28 = "C:/Users/Hydur/OneDrive/Desktop/g-28.pdf"
+i765ws = "C:/Users/Hydur/OneDrive/Desktop/i-765ws.pdf"
+i765 = "C:/Users/Hydur/OneDrive/Desktop/i-765.pdf"
+i821d = "C:/Users/Hydur/OneDrive/Desktop/i-821d.pdf"
 
 from PyPDF2 import PdfReader, PdfWriter
 from PyPDF2.generic import BooleanObject, NameObject, IndirectObject
@@ -29,19 +34,39 @@ def set_need_appearances_writer(writer):
         print("set_need_appearances_writer() catch : ", repr(e))
         return writer
 
-reader = PdfReader(g1145, "rb")
-if "/AcroForm" in reader.trailer["/Root"]:
-    reader.trailer["/Root"]["/AcroForm"].update(
-        {NameObject("/NeedAppearances"): BooleanObject(True)}
-    )
+allForms = {g1145, i131, g28, i765ws, i765, i821d}
 
-blankTextFields = reader.get_form_text_fields()
+# Create a set of all the possible form fields 
+blankTextFieldsKeys = set()
+for form in allForms:
+    reader = PdfReader(form, "rb")
+    if "/AcroForm" in reader.trailer["/Root"]:
+        reader.trailer["/Root"]["/AcroForm"].update(
+            {NameObject("/NeedAppearances"): BooleanObject(True)}
+        )
 
-blankTextFieldsKeys = blankTextFields.keys()
-#print(keys)
-#  G-1145: dict_keys(['PDF417BarCode1[0]', 'LastName[0]', 'FirstName[0]', 'MiddleName[0]', 'Email[0]', 'MobilePhoneNumber[0]'])
+    blankTextFields = reader.get_form_text_fields()
+    blankTextFieldsKeys = blankTextFields.keys()
+    #print(form + ": " + str(blankTextFieldsKeys) + "\n\n")
 
-pdfFillerDict = {}
+
+''' Possible Text Fields in Given Form listed in PossibleTextFieldsConsolidated.txt.
+    Get all the text fields and store them as a set to ensure there are no duplicates.
+    Sets are determined not by the name of the text field, but by the values they should have,
+    e.g., DaytimeTelephoneNumber, MobileNumber1, MobileTelephoneNumber, and MobilePhone should all
+    have the same value (the immigrant's phone number) in them.
+
+    Below is the list of text fields that will have the same values; we are consolidating them so that
+    the user of this form filler will be asked the minimum number of questions needed to fill out all
+    text fields in all the forms:
+
+    Phone Number: MobileNumber1
+    Disposition:  Disposition(I-131 If something happened to the re-entry permit)
+    
+'''
+
+
+'''pdfFillerDict = dict()
 for key in blankTextFieldsKeys:
     
   if "BarCode" not in key:
@@ -70,4 +95,4 @@ writer.update_page_form_field_values(
 with open("filled-out.pdf", "wb") as output_stream:
     writer.write(output_stream)
 
-output_stream.close()
+output_stream.close()'''
